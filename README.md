@@ -71,7 +71,7 @@ Response
 ### 1. Clone Repo
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/devops-ai-agent.git
+git clone https://github.com/nirmalyavishal96-hash/Devops-AI-Agent.git
 cd devops-ai-agent
 ```
 
