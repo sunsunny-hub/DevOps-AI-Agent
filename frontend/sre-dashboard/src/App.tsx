@@ -77,12 +77,17 @@ function App() {
         setMessages((prev) =>
           prev.map((m) =>
             m.incident?.incident_id === id
-              ? { ...m, incident: updated }
+              ? {
+                  ...m,
+                  content: "Root Cause Analysis Ready ✅", // ✅ IMPORTANT
+                  incident: updated,
+                }
               : m
           )
         );
         clearInterval(interval);
       }
+
     }, 1500);
 
     return () => clearInterval(interval);
