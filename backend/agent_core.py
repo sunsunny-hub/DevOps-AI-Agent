@@ -6,6 +6,9 @@ import os
 import asyncio
 from typing import Optional, List
 from requests.exceptions import ReadTimeout
+import html
+import re
+
 
 INCIDENT_STORE: dict = {}
 
@@ -30,7 +33,7 @@ def ask_ai(prompt: str) -> str:
         "Authorization": f"Bearer {PORTKEY_API_KEY}",
     }
     payload = {
-        "model": "@azure-openai/gpt-4o-mini",
+        "model": "@aws-bedrock-use2/us.anthropic.claude-sonnet-4-6",
         "messages": [
             {"role": "system", "content": "You are a senior Kubernetes SRE."},
             {"role": "user", "content": prompt},
@@ -70,6 +73,24 @@ def build_response(
         "recommendations": recommendations,
         "raw_output": raw_output,
     }
+
+def normalize_llm_output(text: str) -> str:
+    # Decode HTML entities (&amp; &lt; &gt;)
+    text = html.unescape(text)
+
+    # Remove Markdown headings (#, ##, ###)
+    text = re.sub(r"^#{1,6}\s*", "", text, flags=re.MULTILINE)
+
+    # Remove blockquote markers (>)
+    text = re.sub(r"^>\s*", "", text, flags=re.MULTILINE)
+
+    # Remove Markdown table pipes
+    text = re.sub(r"\|", "", text)
+
+    # Remove horizontal rules
+    text = re.sub(r"^-{3,}$", "", text, flags=re.MULTILINE)
+
+    return text.strip()
 
 def get_pod_snapshot(namespace: Optional[str] = None) -> List[dict]:
     cmd = (
@@ -113,12 +134,13 @@ def get_cluster_health() -> dict:
     }
 
 async def run_background_rca(incident_id: str, evidence: List[str]) -> None:
-    rca_text = await asyncio.to_thread(
+    raw_rca = await asyncio.to_thread(
         ask_ai,
         "Cluster issues detected:\n"
         + "\n".join(evidence)
         + "\n\nProvide root cause and remediation."
     )
+    rca_text = normalize_llm_output(raw_rca)
 
     incident = INCIDENT_STORE[incident_id]
     INCIDENT_STORE[incident_id] = {

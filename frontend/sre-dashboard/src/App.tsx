@@ -99,21 +99,54 @@ function App() {
 
     return blocks.map((block, blockIdx) => {
       if (blockIdx % 2 === 1) {
+        const lines = block.trim().split("\n");
+
+        // Detect optional language tag (e.g. "bash", "yaml")
+        const firstLine = lines[0].trim();
+        const isLanguage =
+          /^[a-zA-Z]+$/.test(firstLine) && lines.length > 1;
+
+        const language = isLanguage ? firstLine : null;
+        const code = isLanguage ? lines.slice(1).join("\n") : block.trim();
+
         return (
           <Box
             key={blockIdx}
             sx={{
               bgcolor: "#0f172a",
               color: "#e5e7eb",
-              fontFamily: "monospace",
-              fontSize: "0.85rem",
-              p: 2,
               borderRadius: 1,
-              overflowX: "auto",
               my: 2,
+              overflowX: "auto",
             }}
           >
-            {block.trim()}
+            {language && (
+              <Box
+                sx={{
+                  px: 1.5,
+                  py: 0.5,
+                  fontSize: "0.7rem",
+                  color: "#93c5fd",
+                  borderBottom: "1px solid #1e293b",
+                  fontFamily: "monospace",
+                }}
+              >
+                {language}
+              </Box>
+            )}
+
+            <Box
+              component="pre"
+              sx={{
+                m: 0,
+                p: 2,
+                fontFamily: "monospace",
+                fontSize: "0.85rem",
+                whiteSpace: "pre",
+              }}
+            >
+              {code}
+            </Box>
           </Box>
         );
       }
